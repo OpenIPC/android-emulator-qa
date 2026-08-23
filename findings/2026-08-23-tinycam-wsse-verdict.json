@@ -1,0 +1,23 @@
+{
+  "target": "OpenIPC camera, ssc33x / imx335",
+  "majestic_build": "master+c5bf196, 2026-08-14",
+  "app": "tinyCam Monitor PRO v18.1.2 (com.alexvas.dvr.pro)",
+  "user_symptom": "Camera 'Cam 1' authorization required (password prompt loops); Video failed (Check username and password)",
+  "reproduced": true,
+  "root_cause": "majestic ONVIF WSSE parser only matches namespace-PREFIXED <wsse:Security>/<wsse:UsernameToken>; tinyCam sends the semantically-identical UNPREFIXED default-namespace form <Security xmlns=...>, so majestic never finds the UsernameToken and treats every request as unauthenticated.",
+  "tinycam_auth_mode": "WSSE UsernameToken PasswordDigest, unprefixed default namespace; retried ~35x, never falls back to PasswordText or HTTP Basic",
+  "proof": {
+    "unprefixed_PasswordDigest_tinycam_form": "SOAP FailedAuthentication",
+    "prefixed_PasswordText_same_creds": "200 OK",
+    "prefixed_PasswordDigest_same_creds_pw_empty": "FailedAuthentication (needs cleartext onvif.password)",
+    "http_basic_same_creds": "200 OK"
+  },
+  "why_pr357_did_not_help": "PR #357 / 9015d295 added a PRE_AUTH allowlist and challenge emission. tinyCam's GetDeviceInformation is not a PRE_AUTH op, and the WSSE namespace-parsing limitation is untouched by that PR. This camera's build (c5bf196, Aug 14) also predates the Aug-20 fix.",
+  "two_independent_blockers_for_tinycam": [
+    "WSSE namespace prefix: majestic must accept unprefixed <Security xmlns=...> (resolve by namespace URI, not literal prefix)",
+    "PasswordDigest verification requires onvif.password (cleartext); cannot be checked against hashed /etc/shadow"
+  ],
+  "fix_location_majestic": "src/onvif/wsse.c find_username_token (mxml prefix resolution); per kaeru onvif-auth-regression node",
+  "workaround_none_sufficient": "Setting onvif.password alone does NOT fix tinyCam (namespace bug still rejects it); both fixes are required. Confirmed live: with onvif.password=123456 set, tinyCam still failed.",
+  "capture_method": "Android emulator (KVM) driving tinyCam via adb; host-side logging TCP relay (harness/relay.py) since emulator -tcpdump does not capture the slirp-NAT'd camera path"
+}

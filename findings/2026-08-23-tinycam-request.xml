@@ -1,0 +1,9 @@
+POST /onvif/device_service HTTP/1.1
+User-Agent: Android/11 (sdk_gphone_x86_64) com.alexvas.dvr.pro
+Connection: Close
+Content-Type: application/soap+xml; charset=utf-8; action="http://www.onvif.org/ver10/device/wsdl/GetDeviceInformation"
+Content-Length: 929
+Host: 10.0.2.2:8080
+Accept-Encoding: gzip
+
+<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://www.w3.org/2003/05/soap-encoding" xmlns:v="http://www.w3.org/2003/05/soap-envelope"><v:Header><Security v:mustUnderstand="1" xmlns="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"><UsernameToken xmlns="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"><Username>root</Username><Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordDigest">T51/MdpYlv+zMr6h7pp6aaUHUPY=</Password><Nonce>rapk9vpbvcLCo9uMBOxNvg==</Nonce><Created xmlns="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">2026-08-23T08:58:47Z</Created></UsernameToken></Security></v:Header><v:Body><GetDeviceInformation xmlns="http://www.onvif.org/ver10/device/wsdl"/></v:Body></v:Envelope>

@@ -1,0 +1,13 @@
+# Android SDK + JDK + emulator + system image (~5 GB, re-created by bootstrap.sh)
+sdk/
+
+# Per-run capture artifacts (screenshots, pcaps, relay dumps). Keep findings/ instead.
+runs/
+
+# Python
+__pycache__/
+*.pyc
+
+# scratch
+*.tmp
+tmp.png
