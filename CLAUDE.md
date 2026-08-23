@@ -26,6 +26,9 @@ harness/
   relay.py            *** Host-side logging TCP relay — the real capture tool ***
   analyze_relay.py    Summarize a relay dir: per-request auth mode + response
   analyze_pcap.py     Parse a classic pcap (stdlib only) — for -tcpdump captures
+  sip_probe.py        Minimal SIP UAC: P2P-call a majestic camera, capture the
+                      RTP/RTCP it sends, analyze RTP timestamps + RTCP SR
+                      (used to diagnose the Linphone SIP-drop, majestic#398)
   camera.py           SSH helpers for the lab camera (version, config, logs)
   runner.py           Step runner that archives screenshot+dump each action
 flows/
