@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Opera autoplay probe</title>
+<style>
+  html,body{margin:0;background:#111;color:#ddd;font:14px system-ui,sans-serif}
+  #v{width:100%;height:55vh;background:#000;display:block;object-fit:contain}
+  #c{display:none}
+  pre{white-space:pre-wrap;word-break:break-word;padding:8px}
+</style>
+</head>
+<body>
+<!-- Probe for OpenIPC/majestic-webui#317: does Opera for Android autoplay a
+     MUTED MediaStream <video> (what WebRTC ontrack sets up), and if not, does
+     play() reject (so a gesture-retry can arm) or resolve-without-playing? The
+     page POSTs its verdict to /result so CI needs no CDP. Tap anywhere = the
+     user gesture the fix relies on. -->
+<video id="v" muted autoplay playsinline></video>
+<canvas id="c"></canvas>
+<pre id="log">probing…</pre>
+<script src="autoplay.js"></script>
+</body>
+</html>
