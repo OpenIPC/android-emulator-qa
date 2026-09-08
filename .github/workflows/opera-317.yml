@@ -14,28 +14,33 @@ on:
 
 jobs:
   opera:
-    runs-on: macos-15   # Apple silicon → arm64 emulator runs natively
+    # arm64 LINUX runner: arm64-native, and KVM works here (macOS hosted runners
+    # expose no HVF, so their emulator cannot accelerate). arm64 emulator + arm64
+    # Opera = no libndk_translation.
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
-      - name: Show host + start a single adb server
+      - name: Host + KVM
         run: |
           uname -m
-          sysctl -n machdep.cpu.brand_string || true
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          "$ANDROID_HOME/platform-tools/adb" version
-          "$ANDROID_HOME/platform-tools/adb" kill-server || true
-          "$ANDROID_HOME/platform-tools/adb" start-server
+          ls -la /dev/kvm || echo "NO /dev/kvm"
+          egrep -c '(vmx|svm|Features)' /proc/cpuinfo || true
 
-      - name: Run arm64 Opera on an arm64 emulator
+      - name: Enable KVM for all users
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run arm64 Opera on an arm64 emulator (KVM)
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 30
           arch: arm64-v8a
           target: google_apis
           profile: pixel_6
-          cores: 2
           ram-size: 4096M
           emulator-boot-timeout: 1200
           disable-animations: true
