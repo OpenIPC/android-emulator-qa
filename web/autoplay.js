@@ -21,7 +21,7 @@
     currentTimeA: 0, currentTimeB: 0, readyForGesture: false,
     samples: [], reproduced: null, done: false
   };
-  window.__result = R;
+  window.__progress = R;  // live; window.__result is set only at finish
 
   function post(done) {
     R.done = !!done;
@@ -30,7 +30,7 @@
       if (navigator.sendBeacon) navigator.sendBeacon('/result', body);
       else fetch('/result', { method: 'POST', body: body, keepalive: true });
     } catch (e) {}
-    if (done) document.title = 'DONE';
+    if (done) { window.__result = R; document.title = 'DONE'; }
     try { document.getElementById('log').textContent = body; } catch (e) {}
   }
 
