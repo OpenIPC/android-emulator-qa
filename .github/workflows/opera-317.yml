@@ -1,0 +1,46 @@
+name: Opera Android #317
+
+# Reproduce OpenIPC/majestic-webui#317 (Live page loads without video in Opera
+# for Android) on REAL arm64 Opera. The lab's x86_64 emulator can't run Opera
+# (arm64-only; it crashes in libndk_translation). GitHub's macOS runners are
+# Apple-silicon, so an arm64-v8a Android emulator runs natively and Opera needs
+# no translation. This is the spike that proves Opera runs; the reproduction
+# builds on it.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [opera-317-arm-ci]
+
+jobs:
+  opera:
+    runs-on: macos-15   # Apple silicon → arm64 emulator runs natively
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable KVM-equivalent (HVF is default on macOS) / show host
+        run: |
+          uname -m
+          sysctl -n machdep.cpu.brand_string || true
+
+      - name: Run arm64 Opera on an arm64 emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: arm64-v8a
+          target: google_apis
+          profile: pixel_6
+          emulator-boot-timeout: 900
+          disable-animations: true
+          script: bash ci/opera-spike.sh
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: opera-spike
+          path: |
+            opera-launch.png
+            logcat.txt
+          if-no-files-found: warn
