@@ -42,10 +42,11 @@ mvp:
 	@mkdir -p $(RUN)/relay
 	@echo "RUN=$(RUN)"
 	python3 harness/relay.py --outdir $(RUN)/relay \
-	  --map 8080:$(CAMERA_IP):80 --map 8554:$(CAMERA_IP):554 & echo $$! > $(RUN)/relay.pid
+	  --map 8080:$(CAMERA_IP):80 --map 18554:$(CAMERA_IP):554 & echo $$! > $(RUN)/relay.pid
 	sleep 1
 	python3 flows/tinycam_onvif.py --host 10.0.2.2 --onvif-port 8080 \
-	  --rtsp-port 8554 --user root --password 123456 --run-dir $(RUN) || true
+	  --rtsp-port 18554 --user root --password 123456 --run-dir $(RUN) \
+	  --relay-dir $(RUN)/relay || true
 	@kill $$(cat $(RUN)/relay.pid) 2>/dev/null || true
 	python3 harness/analyze_relay.py $(RUN)/relay
 
