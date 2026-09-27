@@ -80,10 +80,15 @@ zero hits.
 
 ```bash
 python3 harness/relay.py --outdir runs/x/relay \
-  --map 8080:$CAMERA_IP:80 --map 8554:$CAMERA_IP:554   # $CAMERA_IP = your camera
-# then set tinyCam host=10.0.2.2, ONVIF port=8080, RTSP port=8554
+  --map 8080:$CAMERA_IP:80 --map 18554:$CAMERA_IP:554   # $CAMERA_IP = your camera
+# then set tinyCam host=10.0.2.2, ONVIF port=8080, RTSP port=18554
 python3 harness/analyze_relay.py runs/x/relay
 ```
+
+**Keep the relay off host port 8554.** The emulator's own gRPC endpoint
+listens on 127.0.0.1:8554, so a relay mapped there dies with
+`OSError: [Errno 98] Address already in use`, and nothing relays RTSP at all.
+The relay uses 18554 for RTSP.
 
 For traffic that *does* stay guest-local you can still use `-tcpdump` +
 `harness/analyze_pcap.py`, but for camera work the relay is the reliable path.

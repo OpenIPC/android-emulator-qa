@@ -9,7 +9,7 @@ every byte in both directions with timestamps + a raw stream per connection.
 Usage (replace 192.168.1.100 with your camera's address):
   relay.py --outdir RUN/relay \
            --map 8080:192.168.1.100:80 \
-           --map 8554:192.168.1.100:554
+           --map 18554:192.168.1.100:554
 """
 import argparse
 import os

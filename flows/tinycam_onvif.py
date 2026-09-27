@@ -8,7 +8,7 @@ own -tcpdump does NOT capture the slirp-NAT'd camera path — use the relay.
 
 Usage:
   python3 flows/tinycam_onvif.py --host 10.0.2.2 --onvif-port 8080 \
-      --rtsp-port 8554 --user root --password 123456 --run-dir runs/<ts>
+      --rtsp-port 18554 --user root --password 123456 --run-dir runs/<ts>
 
 Assumes: emulator booted (harness/capture.py), tinyCam installed
 (com.alexvas.dvr.pro). Install with: adb install -r -g <apk>.
@@ -46,13 +46,24 @@ def tap_rid(dev, rid, timeout=15):
     raise RuntimeError(f"resource-id {rid!r} not found")
 
 
-def tap_text(dev, contains, timeout=15):
+def tap_text(dev, contains, timeout=15, scroll=True):
     end = time.time() + timeout
+    tries = 0
     while time.time() < end:
         n = dump(dev).first(contains=contains)
         if n:
             dev.tap(*n.center)
             return n
+        tries += 1
+        # The settings list is taller than the screen: an item below the
+        # fold (RTSP port, Username, Password) only appears after a scroll.
+        # Scroll down a few times, then back up, so an item above the fold
+        # (Camera status, after the credentials) is found too.
+        if scroll:
+            if (tries // 4) % 2 == 0:
+                dev.swipe(540, 1400, 540, 900)
+            else:
+                dev.swipe(540, 900, 540, 1400)
         time.sleep(1)
     raise RuntimeError(f"text containing {contains!r} not found")
 
@@ -62,7 +73,13 @@ def set_dialog_text(dev, value, clear=24):
     time.sleep(1)
     # focus the field (upper third of dialog), clear, type
     scr = dump(dev)
-    # tap near the visible EditText: the field sits just under the title
+    # Focus the field before typing. Typing into a dialog whose field has not
+    # taken focus yet loses characters: a password dialog once received five
+    # of "123456", and every ONVIF request then failed authentication.
+    field = scr.first(cls="EditText")
+    if field:
+        dev.tap(*field.center)
+        time.sleep(0.5)
     dev.shell("input keyevent KEYCODE_MOVE_END")
     for _ in range(clear):
         dev.key(67)   # DEL
@@ -116,7 +133,11 @@ def run(args):
     tap_text(dev, "Camera brand")
     time.sleep(1.5)
     # open search in the brand chooser
-    search = dump(dev).first(rid="search") or dump(dev).first(desc="Search")
+    # On a fresh install the magnifier is an ImageButton with no id or
+    # content-desc, so fall back to the dialog's only clickable ImageButton.
+    scr = dump(dev)
+    search = (scr.first(rid="search") or scr.first(desc="Search")
+              or scr.first(cls="ImageButton", clickable=True))
     if search:
         dev.tap(*search.center)
         time.sleep(1)
@@ -152,18 +173,28 @@ def run(args):
     archive(dev, run_dir, "15_configured")
 
     # trigger connection test
-    tap_text(dev, "Camera status")
-    time.sleep(8)
-    archive(dev, run_dir, "16_status")
+    # The row title opens the live-feed dialog; after the credentials the
+    # list is scrolled down, so this may need to scroll back up to find it.
+    tap_text(dev, "Camera status", timeout=45)
 
-    # read verdict off the status screen
-    scr = dump(dev)
-    text_blob = " ".join((n.text + " " + n.desc) for n in scr.texts())
+    # Read the verdict off the status dialog, polling: through the relay the
+    # first frame took 20-40 s to arrive on a lab camera, and a single read at
+    # 8 s always saw "0.0 fps". The dialog is not always in the uiautomator
+    # dump either, so a poll that never sees it ends "unknown" and the
+    # screenshots are the record.
     verdict = "unknown"
-    if "authorization required" in text_blob or "Check username" in text_blob:
-        verdict = "AUTH_FAILED"
-    elif "fps" in text_blob and "0.0 fps" not in text_blob:
-        verdict = "STREAMING"
+    end = time.time() + 60
+    while time.time() < end:
+        time.sleep(5)
+        scr = dump(dev)
+        text_blob = " ".join((n.text + " " + n.desc) for n in scr.texts())
+        if "authorization required" in text_blob or "Check username" in text_blob:
+            verdict = "AUTH_FAILED"
+            break
+        if "fps" in text_blob and "0.0 fps" not in text_blob:
+            verdict = "STREAMING"
+            break
+    archive(dev, run_dir, "16_status")
     print(f"verdict={verdict}")
     (run_dir / "flow_verdict.txt").write_text(verdict + "\n")
     return verdict
@@ -173,7 +204,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--host", default="10.0.2.2")
     ap.add_argument("--onvif-port", type=int, default=8080)
-    ap.add_argument("--rtsp-port", type=int, default=8554)
+    ap.add_argument("--rtsp-port", type=int, default=18554)
     ap.add_argument("--user", default="root")
     ap.add_argument("--password", default="123456")
     ap.add_argument("--run-dir", required=True)
