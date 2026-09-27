@@ -49,10 +49,18 @@ class Device:
         return out_path
 
     def ui_dump(self):
-        """Return uiautomator window dump XML as a string."""
+        """Return uiautomator window dump XML as a string.
+
+        The old file is removed first. uiautomator cannot dump a screen that
+        never goes idle — tinyCam's live statistics dialog refreshes
+        continuously and gets "ERROR: could not get idle state" — and without
+        the rm, the cat that follows returned the previous screen's dump as if
+        it were this one."""
         for _ in range(3):
             out = self.shell(
-                "uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; cat /sdcard/ui.xml",
+                "rm -f /sdcard/ui.xml; "
+                "uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; "
+                "cat /sdcard/ui.xml 2>/dev/null",
                 check=False, timeout=30,
             )
             if out.lstrip().startswith("<?xml"):
@@ -62,6 +70,18 @@ class Device:
 
     def tap(self, x, y):
         self.shell(f"input tap {int(x)} {int(y)}")
+
+    def screen_size(self):
+        """(width, height) in pixels from `wm size`; an Override line, when
+        present, is the size apps are laid out at, so it wins."""
+        w = h = None
+        for line in self.shell("wm size").splitlines():
+            if ":" in line and "x" in line:
+                a, b = line.split(":", 1)[1].strip().split("x")
+                w, h = int(a), int(b)
+        if not w:
+            raise RuntimeError("wm size gave no dimensions")
+        return w, h
 
     def swipe(self, x1, y1, x2, y2, ms=300):
         self.shell(f"input swipe {int(x1)} {int(y1)} {int(x2)} {int(y2)} {ms}")
