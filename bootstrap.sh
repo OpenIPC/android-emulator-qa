@@ -8,7 +8,10 @@ SDK="$ROOT/sdk"
 JDK="$SDK/jdk"
 CMDLINE_ZIP_URL="https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
 JDK_URL="https://api.adoptium.net/v3/binary/latest/17/ga/linux/x64/jdk/hotspot/normal/eclipse"
-IMAGE="system-images;android-30;google_apis;x86_64"
+# API level is overridable: API=34 ./bootstrap.sh (API 34 has the newer ARM
+# translator, needed for arm-only apps such as PixelPilot).
+API="${API:-30}"
+IMAGE="system-images;android-${API};google_apis;x86_64"
 
 mkdir -p "$SDK"
 
@@ -44,10 +47,10 @@ export ANDROID_HOME="$SDK"
 
 # --- SDK packages ---
 if [ ! -x "$SDK/platform-tools/adb" ] || [ ! -x "$SDK/emulator/emulator" ] \
-   || [ ! -d "$SDK/system-images/android-30/google_apis/x86_64" ]; then
+   || [ ! -d "$SDK/system-images/android-${API}/google_apis/x86_64" ]; then
     log "accepting licenses + installing packages (platform-tools, emulator, $IMAGE)"
     yes | "$SDKMANAGER" --licenses >/dev/null || true
-    "$SDKMANAGER" "platform-tools" "emulator" "$IMAGE" "platforms;android-30"
+    "$SDKMANAGER" "platform-tools" "emulator" "$IMAGE" "platforms;android-${API}"
 fi
 log "adb: $("$SDK/platform-tools/adb" --version | head -1)"
 log "emulator: $("$SDK/emulator/emulator" -version 2>/dev/null | head -1 || echo n/a)"

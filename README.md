@@ -12,6 +12,7 @@ a camera and inspecting the ONVIF/RTSP exchange byte-for-byte.
 
 ```bash
 make bootstrap                    # once: JDK + Android SDK + emulator + API-30 image (~5 GB)
+                                  # API=34 make bootstrap for arm-only apps (ARM translation)
 make boot && make wait            # headless emulator, KVM-accelerated
 make install APK=/path/to/app.apk # push an APK
 make mvp CAMERA_IP=192.168.1.100  # relay + drive tinyCam ONVIF + print auth analysis
@@ -39,5 +40,6 @@ ONVIF/majestic auth cheatsheet. A worked investigation is in
 | `harness/device.py`, `ui.py` | adb control + uiautomator parsing |
 | `harness/camera.py` | SSH helpers for the camera (env-configurable) |
 | `flows/tinycam_onvif.py` | Reusable add-ONVIF-camera flow |
+| `flows/pixelpilot_smoke.py` | PixelPilot start-up + H.264 decode smoke test (arm-only app under ARM translation) |
 
 Requires KVM (`/dev/kvm`) and is entirely user-space (no root).
