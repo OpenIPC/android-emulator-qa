@@ -8,9 +8,10 @@ Two purposes:
 1. Debug closed-source APKs (tinyCam, ODM, …) that exercise ONVIF/RTSP/etc.
    against cameras — reproduce "no connectivity / auth failed / no video"
    reports by clicking through the real app and capturing the traffic.
-2. E2e-test our own upcoming Android software (WebRTC libraries bundled in
-   Android). *Not built yet — the device/UI/capture layers are app-agnostic, so
-   it's a new `flows/` entry, not a rewrite.*
+2. E2e-test our own Android software. First one: `flows/pixelpilot_smoke.py`
+   (PixelPilot ships arm64/armv7 only; it runs under NDK ARM translation on the
+   API-34 x86_64 image, `API=34 make bootstrap`). The device/UI/capture layers
+   are app-agnostic, so each further app is a new `flows/` entry.
 
 ## Layout
 
@@ -30,6 +31,8 @@ harness/
   runner.py           Step runner that archives screenshot+dump each action
 flows/
   tinycam_onvif.py    Add-ONVIF-camera flow, parameterized, drives by id/text
+  pixelpilot_smoke.py PixelPilot: install, survive start-up (VPN consent), decode a
+                      synthetic H.264 RTP stream over UDP 5600; verdict.json
 runs/<ts>-.../        Per-run artifacts (gitignored): screenshots, relay dumps,
                       verdict.json
 findings/             Committed investigation writeups (small; no big binaries)

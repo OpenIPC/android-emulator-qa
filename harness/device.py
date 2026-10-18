@@ -1,10 +1,18 @@
 """Thin adb wrapper for driving an emulator instance."""
+import os
 import subprocess
 import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+# bootstrap.sh installs everything under ./sdk; on a CI runner that already
+# has an SDK (ANDROID_SDK_ROOT / ANDROID_HOME) reuse that one instead.
 SDK = ROOT / "sdk"
+if not SDK.is_dir():
+    for var in ("ANDROID_SDK_ROOT", "ANDROID_HOME"):
+        if os.environ.get(var):
+            SDK = Path(os.environ[var])
+            break
 ADB = SDK / "platform-tools" / "adb"
 
 
